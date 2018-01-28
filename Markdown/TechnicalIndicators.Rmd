@@ -1,0 +1,84 @@
+---
+title: "Technical Indicators"
+author: "Eoin Flynn"
+date: "28 January 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Disclaimer - Read before use
+The data used and the tools used to analyse the data are all provided by third party sources and may not produce valid results. Do not use this file to make any investment decision. 
+
+##Purpose of this document
+The purpose of this document is to allow users to quickly create a list of technical indicators for personal use. It is not intended to be used by anyone who will use the results in this document for investment or trading purposes. It will output figures that users can then use for further research. This document will not discuss each technical indicator, its optimal paramaters are, and what its results mean.
+
+#Instruments
+Enter the instruments that you want to examine below. They do not have to be from the same market and can be different types of instruments. All data is sourced from Yahoo Finance. Visit Yahoo Finance to find the ticker codes of the instruments you want to use.
+You also need to set the date that you want your data to start at. Your instruments did not have to be listed at that time.
+```{r}
+library(quantmod)
+
+# Instruments that the technical indicators will be used on
+instruments <- c("WES.AX", "TLS.AX")
+
+#Start date
+startDate <- "2014-01-01"
+
+#Download the symbols
+getSymbols(instruments, src = "yahoo", from = startDate)
+```
+
+#Indicators
+In this section you can set what indicators that you want to run and if you want a graph to be produced. By default all indicators will run and a graph will be created for each. To disable an indicator or a graph set it to FALSE or F. Please conduct further research if you are not sure which indicator is applicable to your scenario.
+```{r}
+runRSI <- TRUE
+graphRSI <- TRUE
+runMACD <- TRUE
+graphMACD <- TRUE
+```
+
+#Analysis
+This stage runs through each indicator instrument by instrument.
+##RSI
+```{r}
+# This is the number of periods in days. You can modify this value to suit your analysis
+numberOfRSIPeriods <- 14
+
+# Create the dataframe that will store the outputs
+instruments_RSIs <- as.xts(data.frame())
+
+if(runRSI){
+  for (instrument in instruments){
+    # Get the symbol
+    symbol <- get(instrument)
+    # Drop any n.a
+    symbol <- na.omit(symbol)
+    
+    #Calculate the latest RSI
+    rsi <- RSI(Cl(symbol), n = numberOfRSIPeriods)[NROW(symbol)]
+    
+    # Rename the column to the name of the instrument
+    colnames(rsi) <- instrument
+    # If there are no rows yet, then make the df equal to the first RSI
+    if(NCOL(instruments_RSIs) == 0){
+    # Set the df equal to the rsi if it is currently empty
+      instruments_RSIs <- rsi
+    }
+    # If there is already data then add a new column to the dataframe
+    else{
+      instruments_RSIs <- merge(instruments_RSIs, rsi)
+    }
+    
+    # Create the graphs if they are enabled
+    if(graphRSI){
+      # Create a chart with the RSI
+      chartSeries(x <- Cl(symbol), TA = (sprintf("addRSI(n=%s)", numberOfRSIPeriods)), name = instrument)
+    }
+   
+  }
+}
+```
+
