@@ -48,7 +48,7 @@ This stage runs through each indicator instrument by instrument.
 numberOfRSIPeriods <- 14
 
 # Create the dataframe that will store the outputs
-instruments_RSIs <- as.xts(data.frame())
+instrumentsRSIs <- as.xts(data.frame())
 
 if(runRSI){
   for (instrument in instruments){
@@ -63,13 +63,13 @@ if(runRSI){
     # Rename the column to the name of the instrument
     colnames(rsi) <- instrument
     # If there are no rows yet, then make the df equal to the first RSI
-    if(NCOL(instruments_RSIs) == 0){
+    if(NCOL(instrumentsRSIs) == 0){
     # Set the df equal to the rsi if it is currently empty
-      instruments_RSIs <- rsi
+      instrumentsRSIs <- rsi
     }
     # If there is already data then add a new column to the dataframe
     else{
-      instruments_RSIs <- merge(instruments_RSIs, rsi)
+      instrumentsRSIs <- merge(instrumentsRSIs, rsi)
     }
     
     # Create the graphs if they are enabled
@@ -78,6 +78,8 @@ if(runRSI){
       chartSeries(x <- Cl(symbol), TA = (sprintf("addRSI(n=%s)", numberOfRSIPeriods)), name = instrument)
     }
    
+    # Display the table
+    print(instrumentsRSIs)
   }
 }
 ```
