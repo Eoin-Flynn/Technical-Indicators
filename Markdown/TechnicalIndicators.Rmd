@@ -20,6 +20,8 @@ Enter the instruments that you want to examine below. They do not have to be fro
 You also need to set the date that you want your data to start at. Your instruments did not have to be listed at that time.
 ```{r}
 library(quantmod)
+library(TTR)
+library(xts)
 
 # Instruments that the technical indicators will be used on
 instruments <- c("WES.AX", "TLS.AX")
@@ -41,10 +43,11 @@ graphMACD <- TRUE
 ```
 
 #Analysis
-This stage runs through each indicator instrument by instrument.
+This stage runs through each indicator instrument by instrument. There are parameters that you can change to better fit your analysis, these will be marked as such.
+
 ##RSI
 ```{r}
-# This is the number of periods in days. You can modify this value to suit your analysis
+# The number of periods in days. This value can be modified. Default = 14
 numberOfRSIPeriods <- 14
 
 # Create the dataframe that will store the outputs
@@ -82,5 +85,54 @@ if(runRSI){
     print(instrumentsRSIs)
   }
 }
+```
+
+##MACD
+```{r}
+# The number of periods for the fast moving average in days. This value can be modified. Default is 12
+fastMA <- 12
+# The number of periods for the slow moving average in days. This value can be modified. Default is 26
+slowMA <- 26
+# The number of periods for the signal line. This value can be modified. Default is 9
+signalMA <- 9
+
+# Create a dataframe that will store the outputs
+instrumentsMACDs <- as.xts(data.frame())
+
+if(runMACD){
+  for(instrument in instruments){
+    # Get the symbol
+    symbol <- get(instrument)
+    # Drop any na
+    symbol <- na.omit(symbol)
+    
+    # Calculate the latest MACD
+    macd <- MACD(Cl(symbol), nFast = fastMA, nSlow = slowMA, nSig = signalMA)[NROW(symbol)]
+    
+    # Rename the column to the name of the instrument
+    colnames(macd) <- c(paste(instrument, "MACD", sep = " "), paste(instrument, "Signal", sep = " "))
+    
+    # If there are no rows yet, then make the df equal to the first RSI
+    if(NCOL(instrumentsMACDs) == 0){
+    # Set the df equal to the rsi if it is currently empty
+      instrumentsMACDs <- macd
+    }
+    # If there is already data then add a new column to the dataframe
+    else{
+      instrumentsMACDs <- merge(instrumentsMACDs, macd)
+    }
+    
+    # Create the graphs if they are enabled
+    if(graphMACD){
+      # Create a chart with the RSI
+      chartSeries(x <- Cl(symbol), TA = (sprintf("addMACD(fast = %s, slow = %s, signal = %s)", fastMA, slowMA, signalMA)), name = instrument)
+    }
+   
+    # Display the table
+    print(instrumentsMACDs)
+    
+  }
+}
+
 ```
 
